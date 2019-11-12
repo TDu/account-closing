@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Account Cut-off Accrual Picking module for OpenERP
@@ -23,7 +22,7 @@
 
 {
     'name': 'Account Accrual Picking',
-    'version': '10.0.0.1.0',
+    'version': '12.0.0.1.0',
     'category': 'Accounting & Finance',
     'license': 'AGPL-3',
     'summary': 'Accrued Expense & Accrued Revenue from Pickings',

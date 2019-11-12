@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from odoo.tools import DEFAULT_SERVER_DATETIME_FORMAT
@@ -8,7 +7,7 @@ from odoo.tests.common import TransactionCase
 class TestAccountCutoffAccrualPicking(TransactionCase):
 
     def setUp(self):
-        super(TestAccountCutoffAccrualPicking, self).setUp()
+        super().setUp()
         self.company = self.env.ref('base.main_company')
         self.accrual_journal = self.env['account.journal'].create({
             'code': 'cop0',
@@ -54,10 +53,10 @@ class TestAccountCutoffAccrualPicking(TransactionCase):
             'pricelist_id': self.env.ref('product.list0').id,
         })
 
-        type = 'accrued_revenue'
-        cutoff = self.env['account.cutoff'].with_context(default_type=type)\
+        cutoff_type = 'accrued_revenue'
+        cutoff = self.env['account.cutoff'].with_context(default_type=cutoff_type)\
             .create({
-                'type': type,
+                'cutoff_type': cutoff_type,
                 'company_id': 1,
                 'cutoff_date': datetime.today() + relativedelta(days=+15),
             })
@@ -112,10 +111,10 @@ class TestAccountCutoffAccrualPicking(TransactionCase):
                 }) for p in self.products],
         })
 
-        type = 'accrued_expense'
-        cutoff = self.env['account.cutoff'].with_context(default_type=type)\
+        cutoff_type = 'accrued_expense'
+        cutoff = self.env['account.cutoff'].with_context(default_type=cutoff_type)\
             .create({
-                'type': type,
+                'cutoff_type': cutoff_type,
                 'company_id': 1,
                 'cutoff_date': datetime.today() + relativedelta(days=+15),
             })

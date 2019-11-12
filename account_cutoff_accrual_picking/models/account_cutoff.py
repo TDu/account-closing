@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 ##############################################################################
 #
 #    Account Cut-off Accrual Picking module for OpenERP
@@ -37,8 +36,7 @@ class AccountCutoff(models.Model):
     @api.model
     def _inherit_default_cutoff_account_id(self):
         """ Set up default account for a new cutoff """
-        account_id = super(AccountCutoff,
-                           self)._inherit_default_cutoff_account_id()
+        account_id = super()._inherit_default_cutoff_account_id()
         type_cutoff = self.env.context.get('type')
         company = self.env.user.company_id
         if type_cutoff == 'accrued_expense':
@@ -50,7 +48,7 @@ class AccountCutoff(models.Model):
     def _get_account_mapping(self):
         """ Prepare account mapping """
         return self.env['account.cutoff.mapping']._get_mapping_dict(
-            self.company_id.id, self.type)
+            self.company_id.id, self.cutoff_type)
 
     def _get_account(self, line, type, fpos):
         if type in 'accrued_revenue':
@@ -71,16 +69,16 @@ class AccountCutoff(models.Model):
         Calculate accrued expense using purchase.order.line
         or accrued revenu using sale.order.line
         """
-        assert self.type in ('accrued_expense', 'accrued_revenue'),\
-            "The field 'type' has a wrong value"
+        assert self.cutoff_type in ('accrued_expense', 'accrued_revenue'),\
+            "The field 'cutoff_type' has a wrong value"
 
         partner = line.order_id.partner_id
         fpos = partner.property_account_position_id
-        account_id = self._get_account(line, self.type, fpos).id
+        account_id = self._get_account(line, self.cutoff_type, fpos).id
         accrual_account_id = self._get_account_mapping().get(
             account_id, account_id)
 
-        if self.type == 'accrued_expense':
+        if self.cutoff_type == 'accrued_expense':
             received_qty = line.qty_received
             # Processing purchase order line
             analytic_account_id = line.account_analytic_id.id
@@ -98,7 +96,7 @@ class AccountCutoff(models.Model):
                 else:
                     received_qty -= move.product_uom_qty
 
-        elif self.type == 'accrued_revenue':
+        elif self.cutoff_type == 'accrued_revenue':
             received_qty = line.qty_delivered
             # Processing sale order line
             analytic_account_id = line.order_id.project_id.id or False
@@ -131,20 +129,20 @@ class AccountCutoff(models.Model):
             'invoiced_qty_ids': invoiced_qty,
         }
 
-        if self.type == 'accrued_revenue':
+        if self.cutoff_type == 'accrued_revenue':
             res['sale_line_id'] = line.id
-        elif self.type == 'accrued_expense':
+        elif self.cutoff_type == 'accrued_expense':
             res['purchase_line_id'] = line.id
 
         return res
 
     def get_lines(self):
-        res = super(AccountCutoff, self).get_lines()
-        if self.type == 'accrued_revenue':
+        res = super().get_lines()
+        if self.cutoff_type == 'accrued_revenue':
             lines = self.env['sale.order.line'].search([
                 ['qty_to_invoice', '!=', 0],
             ])
-        elif self.type == 'accrued_expense':
+        elif self.cutoff_type == 'accrued_expense':
             lines = self.env['purchase.order.line'].search(
                 [('qty_to_invoice', '!=', 0)]
             )
@@ -167,7 +165,7 @@ class AccountCutoff(models.Model):
         last_day -= relativedelta(days=1)
         cutoff = self.with_context(type=type).create({
             'cutoff_date': last_day,
-            'type': type,
+            'cutoff_type': type,
             'auto_reverse': True,
             })
         cutoff.get_lines()
@@ -245,11 +243,11 @@ class AccountCutoffLine(models.Model):
                 rec.price_unit, rec.currency_id, rec.quantity,
                 rec.product_id, rec.partner_id)
             amount = tax_res['total_excluded']
-            if rec.parent_id.type == 'accrued_expense':
+            if rec.parent_id.cutoff_type == 'accrued_expense':
                 amount = amount * -1
                 tax_account_field_name = 'account_accrued_expense_id'
                 tax_account_field_label = 'Accrued Expense Tax Account'
-            elif rec.parent_id.type == 'accrued_revenue':
+            elif rec.parent_id.cutoff_type == 'accrued_revenue':
                 tax_account_field_name = 'account_accrued_revenue_id'
                 tax_account_field_label = 'Accrued Revenue Tax Account'
             for tax_line in tax_res['taxes']:
@@ -263,7 +261,7 @@ class AccountCutoffLine(models.Model):
                         % (tax_account_field_label, tax_read['name']))
                 else:
                     tax_accrual_account_id = tax_accrual_account_id[0]
-                if rec.parent_id.type == 'accrued_expense':
+                if rec.parent_id.cutoff_type == 'accrued_expense':
                     tax_line['amount'] = tax_line['amount'] * -1
                 if rec.company_currency_id != rec.currency_id:
                     currency_at_date = rec.currency_id.with_context(

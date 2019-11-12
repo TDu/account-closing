@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 # Copyright 2018 Jacques-Etienne Baudoux (BCIM sprl) <je@bcim.be>
 # License AGPL-3.0 or later (http://www.gnu.org/licenses/agpl).
 
@@ -24,7 +23,7 @@ class AccountInvoiceLine(models.Model):
                 ON ail.invoice_id=ai.id
             JOIN account_cutoff ac
                 ON COALESCE(ai.date, ai.date_invoice) <= ac.cutoff_date
-                AND ac.type='accrued_expense'
+                AND ac.cutoff_type='accrued_expense'
             LEFT JOIN account_cutoff_line acl
                 ON acl.parent_id=ac.id
                 AND ail.purchase_line_id=acl.purchase_line_id
@@ -75,7 +74,7 @@ class AccountInvoice(models.Model):
     def invoice_validate(self):
         self.filtered(lambda r: r.type in ('in_refund', 'in_invoice')).\
             invoice_line_ids._update_cutoff_expense()
-        return super(AccountInvoice, self).invoice_validate()
+        return super().invoice_validate()
 
     def unlink(self):
         acli = self.env['account.cutoff.line.invoice'].search(
@@ -87,4 +86,4 @@ class AccountInvoice(models.Model):
                     "where the cutoff accounting entry has already been "
                     "created"))
             acli.unlink()
-        return super(AccountInvoice, self).unlink()
+        return super().unlink()
